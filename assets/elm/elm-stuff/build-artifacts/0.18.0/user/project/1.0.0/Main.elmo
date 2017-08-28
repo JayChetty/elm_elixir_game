@@ -147,7 +147,7 @@ var _user$project$Main$boardView = function (model) {
 		A2(
 			_elm_lang$core$List$map,
 			_user$project$Main$boardRowView(model),
-			A2(_elm_lang$core$List$range, 0, 5)));
+			A2(_elm_lang$core$List$range, 0, 10)));
 };
 var _user$project$Main$view = function (model) {
 	return _user$project$Main$boardView(model);

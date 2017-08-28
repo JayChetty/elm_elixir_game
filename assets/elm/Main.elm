@@ -51,7 +51,7 @@ type Msg=
 boardView : Model -> Html Msg
 boardView model =
     div [class "board"]
-      ( List.range 0 5
+      ( List.range 0 10
         |> List.map( boardRowView(model) )
       )
 
@@ -60,13 +60,14 @@ boardRowView : Model -> Int -> Html Msg
 boardRowView model rowNum =
   div [class "row"]
     ( List.range 0 5
-      |> List.map (boardCell model rowNum)  )
+      |> List.map( boardCell(model)(rowNum)  )
+    )
 
 boardCell :  Model -> Int -> Int -> Html Msg
 boardCell model rowNum colNum =
   case model.position.row == rowNum && model.position.col == colNum of
     True ->
-      div [class "cell"] [ text "J"]
+      div([class "cell"])([ text "J"])
     False ->
       div [class "cell", onClick (Move (Position rowNum colNum)) ] []
 
