@@ -1,38 +1,101 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text, program)
-
+import Html exposing (Html, Attribute, div, program, input, text, ul, li, button)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onInput, onSubmit, onClick)
 
 
 
 -- MODEL
 
+type alias Position = {row: Int, col: Int}
+
+type alias Player =
+  { name: String}
 
 type alias Model =
-    String
+  { players: List Player,
+    currentPlayerName: String,
+    inGame: Bool,
+    position: Position
+  }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( "Hello", Cmd.none )
+    ( {
+       players = [ {name = "Someone Else"}]
+      ,currentPlayerName = ""
+      ,inGame = False
+      ,position = Position 0 0
+      },
+      Cmd.none
+    )
 
 
 
 -- MESSAGES
 
 
-type Msg
-    = NoOp
+type Msg=
+    Change String
+    | Submit
+    | Move Position
+    | NoOp
+
 
 
 
 -- VIEW
 
+boardView : Model -> Html Msg
+boardView model =
+    div [class "board"]
+      ( List.range 0 5
+        |> List.map( boardRowView(model) )
+      )
+
+
+boardRowView : Model -> Int -> Html Msg
+boardRowView model rowNum =
+  div [class "row"]
+    ( List.range 0 5
+      |> List.map (boardCell model rowNum)  )
+
+boardCell :  Model -> Int -> Int -> Html Msg
+boardCell model rowNum colNum =
+  case model.position.row == rowNum && model.position.col == colNum of
+    True ->
+      div [class "cell"] [ text "J"]
+    False ->
+      div [class "cell", onClick (Move (Position rowNum colNum)) ] []
+
+
+
+
+enterView : Model -> Html Msg
+enterView model =
+  div []
+      [ input [ placeholder "Player, enter name.", onInput Change ] []
+      , button [ onClick Submit ] [ text "Enter" ]
+      ]
+
+
+playView : Model -> Html Msg
+playView model =
+  div []
+      [ul []
+        ( List.map (\player -> li [] [ text player.name ]) model.players )
+      ]
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ text model ]
+  boardView model
+  -- case model.inGame of
+  --     True -> playView model
+  --     False -> enterView model
+
+
 
 
 
@@ -44,6 +107,16 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+        Change text->
+            ( { model | currentPlayerName = text }, Cmd.none )
+        Move position ->
+            ( { model | position = position }, Cmd.none )
+        Submit->
+            let
+              newPlayer = { name = model.currentPlayerName }
+              newPlayers = newPlayer :: model.players
+            in
+              ( { model | players = newPlayers, inGame = True }, Cmd.none )
 
 
 
