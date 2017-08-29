@@ -9954,6 +9954,24 @@ var _user$project$Main$Position = F2(
 	function (a, b) {
 		return {row: a, col: b};
 	});
+var _user$project$Main$Player = function (a) {
+	return {name: a};
+};
+var _user$project$Main$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {players: a, currentPlayerName: b, inGame: c, position: d, phxSocket: e, messages: f};
+	});
+var _user$project$Main$NoOp = {ctor: 'NoOp'};
+var _user$project$Main$ReceiveMessage = function (a) {
+	return {ctor: 'ReceiveMessage', _0: a};
+};
+var _user$project$Main$initPhxSocket = A4(
+	_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
+	'new_msg',
+	'room:lobby',
+	_user$project$Main$ReceiveMessage,
+	_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
+		_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:4000/socket/websocket')));
 var _user$project$Main$init = {
 	ctor: '_Tuple2',
 	_0: {
@@ -9965,19 +9983,12 @@ var _user$project$Main$init = {
 		currentPlayerName: '',
 		inGame: false,
 		position: A2(_user$project$Main$Position, 0, 0),
-		phxSocket: _fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:4000/socket/websocket'),
+		phxSocket: _user$project$Main$initPhxSocket,
 		messages: {ctor: '[]'}
 	},
 	_1: _elm_lang$core$Platform_Cmd$none
 };
-var _user$project$Main$Player = function (a) {
-	return {name: a};
-};
-var _user$project$Main$Model = F6(
-	function (a, b, c, d, e, f) {
-		return {players: a, currentPlayerName: b, inGame: c, position: d, phxSocket: e, messages: f};
-	});
-var _user$project$Main$NoOp = {ctor: 'NoOp'};
+var _user$project$Main$Ping = {ctor: 'Ping'};
 var _user$project$Main$ShowLeftMessage = function (a) {
 	return {ctor: 'ShowLeftMessage', _0: a};
 };
@@ -9990,9 +10001,8 @@ var _user$project$Main$PhoenixMsg = function (a) {
 };
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p0 = A2(_elm_lang$core$Debug$log, 'Updating', model);
-		var _p1 = msg;
-		switch (_p1.ctor) {
+		var _p0 = msg;
+		switch (_p0.ctor) {
 			case 'NoOp':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'Change':
@@ -10000,7 +10010,7 @@ var _user$project$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{currentPlayerName: _p1._0}),
+						{currentPlayerName: _p0._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Move':
@@ -10008,7 +10018,7 @@ var _user$project$Main$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{position: _p1._0}),
+						{position: _p0._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'Submit':
@@ -10022,9 +10032,9 @@ var _user$project$Main$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'PhoenixMsg':
-				var _p2 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p1._0, model.phxSocket);
-				var phxSocket = _p2._0;
-				var phxCmd = _p2._1;
+				var _p1 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p0._0, model.phxSocket);
+				var phxSocket = _p1._0;
+				var phxCmd = _p1._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10045,9 +10055,10 @@ var _user$project$Main$update = F2(
 							_fbonetti$elm_phoenix_socket$Phoenix_Channel$withPayload,
 							_user$project$Main$userParams,
 							_fbonetti$elm_phoenix_socket$Phoenix_Channel$init('room:lobby'))));
-				var _p3 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.phxSocket);
-				var phxSocket = _p3._0;
-				var phxCmd = _p3._1;
+				var _p2 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.phxSocket);
+				var phxSocket = _p2._0;
+				var phxCmd = _p2._1;
+				var _p3 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'Trying to join channel');
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10056,6 +10067,7 @@ var _user$project$Main$update = F2(
 					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
 				};
 			case 'ShowJoinedMessage':
+				var _p4 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'JOINED CHANNEL!');
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -10063,26 +10075,39 @@ var _user$project$Main$update = F2(
 						{
 							messages: {
 								ctor: '::',
-								_0: A2(_elm_lang$core$Basics_ops['++'], 'Joined channel ', _p1._0),
+								_0: A2(_elm_lang$core$Basics_ops['++'], 'Joined channel ', _p0._0),
 								_1: model.messages
 							}
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'ShowLeftMessage':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							messages: {
+								ctor: '::',
+								_0: A2(_elm_lang$core$Basics_ops['++'], 'Left channel ', _p0._0),
+								_1: model.messages
+							}
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'Ping':
+				var push_ = A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, 'new_msg', 'room:lobby');
+				var _p5 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push_, model.phxSocket);
+				var phxSocket = _p5._0;
+				var phxCmd = _p5._1;
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
 				};
 			default:
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							messages: {
-								ctor: '::',
-								_0: A2(_elm_lang$core$Basics_ops['++'], 'Left channel ', _p1._0),
-								_1: model.messages
-							}
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				var _p6 = A2(_elm_lang$core$Debug$log, 'GOT A NEW MESSAGE', 'I DID');
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 		}
 	});
 var _user$project$Main$subscriptions = function (model) {
@@ -10093,8 +10118,8 @@ var _user$project$Main$Move = function (a) {
 };
 var _user$project$Main$boardCell = F3(
 	function (model, rowNum, colNum) {
-		var _p4 = _elm_lang$core$Native_Utils.eq(model.position.row, rowNum) && _elm_lang$core$Native_Utils.eq(model.position.col, colNum);
-		if (_p4 === true) {
+		var _p7 = _elm_lang$core$Native_Utils.eq(model.position.row, rowNum) && _elm_lang$core$Native_Utils.eq(model.position.col, colNum);
+		if (_p7 === true) {
 			return A2(
 				_elm_lang$html$Html$div,
 				{
@@ -10215,7 +10240,22 @@ var _user$project$Main$view = function (model) {
 							_0: _elm_lang$html$Html$text('Join Room'),
 							_1: {ctor: '[]'}
 						}),
-					_1: {ctor: '[]'}
+					_1: {
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$button,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Ping),
+								_1: {ctor: '[]'}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('Ping'),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}
 				}
 			}
 		});

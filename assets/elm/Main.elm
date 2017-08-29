@@ -33,6 +33,12 @@ type alias Model =
     messages: List String
   }
 
+initPhxSocket : Phoenix.Socket.Socket Msg
+initPhxSocket =
+    Phoenix.Socket.init "ws://localhost:4000/socket/websocket"
+        |> Phoenix.Socket.withDebug
+        |> Phoenix.Socket.on "new_msg" "room:lobby" ReceiveMessage
+
 
 init : ( Model, Cmd Msg )
 init =
@@ -41,7 +47,7 @@ init =
       ,currentPlayerName = ""
       ,inGame = False
       ,position = Position 0 0
-      ,phxSocket = Phoenix.Socket.init "ws://localhost:4000/socket/websocket"
+      ,phxSocket = initPhxSocket
       ,messages = []
       },
       Cmd.none
@@ -60,8 +66,9 @@ type Msg=
     | JoinChannel
     | ShowJoinedMessage String
     | ShowLeftMessage String
+    | Ping
+    | ReceiveMessage JE.Value
     | NoOp
-
 
 
 
@@ -115,6 +122,7 @@ view model =
       enterView model
     , playersView model
     , button [ onClick JoinChannel ] [ text "Join Room" ]
+    , button [ onClick Ping ] [ text "Ping" ]
     ]
   -- case model.inGame of
   --     True -> playView model
@@ -132,8 +140,6 @@ userParams =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let _ = Debug.log "Updating" model
-    in
     case msg of
         NoOp ->
             ( model, Cmd.none )
@@ -156,6 +162,7 @@ update msg model =
               )
         JoinChannel ->
             let
+                _ = Debug.log "UPDATE" "Trying to join channel"
                 channel =
                     Phoenix.Channel.init "room:lobby"
                         |> Phoenix.Channel.withPayload userParams
@@ -169,6 +176,8 @@ update msg model =
                 , Cmd.map PhoenixMsg phxCmd
                 )
         ShowJoinedMessage channelName ->
+            let _ = Debug.log "UPDATE" "JOINED CHANNEL!"
+            in
             ( { model | messages = ("Joined channel " ++ channelName) :: model.messages }
             , Cmd.none
             )
@@ -177,6 +186,19 @@ update msg model =
             ( { model | messages = ("Left channel " ++ channelName) :: model.messages }
             , Cmd.none
             )
+        Ping ->
+            let
+                push_ =
+                    Phoenix.Push.init "new_msg" "room:lobby"
+
+                ( phxSocket, phxCmd ) =
+                    Phoenix.Socket.push push_ model.phxSocket
+            in
+                (  model , Cmd.map PhoenixMsg phxCmd )
+        ReceiveMessage raw ->
+            let _ = Debug.log "GOT A NEW MESSAGE" "I DID"
+            in
+            (model, Cmd.none)
 
 
 
