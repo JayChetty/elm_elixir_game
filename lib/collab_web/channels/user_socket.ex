@@ -1,8 +1,9 @@
 defmodule CollabWeb.UserSocket do
   use Phoenix.Socket
+  import Logger
 
   ## Channels
-  # channel "room:*", CollabWeb.RoomChannel
+  channel "room:*", CollabWeb.RoomChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket
@@ -20,6 +21,7 @@ defmodule CollabWeb.UserSocket do
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
   def connect(_params, socket) do
+    Logger.warn "CONNECTING #{inspect socket}"
     {:ok, socket}
   end
 

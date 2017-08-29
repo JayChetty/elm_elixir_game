@@ -1,8 +1,19 @@
 module Main exposing (..)
 
+
+
 import Html exposing (Html, Attribute, div, program, input, text, ul, li, button)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onInput, onSubmit, onClick)
+
+import Phoenix.Socket
+import Phoenix.Channel
+import Phoenix.Push
+
+import Debug
+
+import Json.Encode as JE
+import Json.Decode as JD exposing (field)
 
 
 
@@ -17,7 +28,9 @@ type alias Model =
   { players: List Player,
     currentPlayerName: String,
     inGame: Bool,
-    position: Position
+    position: Position,
+    phxSocket : Phoenix.Socket.Socket Msg,
+    messages: List String
   }
 
 
@@ -28,6 +41,8 @@ init =
       ,currentPlayerName = ""
       ,inGame = False
       ,position = Position 0 0
+      ,phxSocket = Phoenix.Socket.init "ws://localhost:4000/socket/websocket"
+      ,messages = []
       },
       Cmd.none
     )
@@ -41,6 +56,10 @@ type Msg=
     Change String
     | Submit
     | Move Position
+    | PhoenixMsg (Phoenix.Socket.Msg Msg)
+    | JoinChannel
+    | ShowJoinedMessage String
+    | ShowLeftMessage String
     | NoOp
 
 
@@ -82,8 +101,8 @@ enterView model =
       ]
 
 
-playView : Model -> Html Msg
-playView model =
+playersView : Model -> Html Msg
+playersView model =
   div []
       [ul []
         ( List.map (\player -> li [] [ text player.name ]) model.players )
@@ -91,13 +110,21 @@ playView model =
 
 view : Model -> Html Msg
 view model =
-  boardView model
+  div []
+    [
+      enterView model
+    , playersView model
+    , button [ onClick JoinChannel ] [ text "Join Room" ]
+    ]
   -- case model.inGame of
   --     True -> playView model
   --     False -> enterView model
 
 
 
+userParams : JE.Value
+userParams =
+    JE.object [ ( "user_id", JE.string "123" ) ]
 
 
 -- UPDATE
@@ -105,6 +132,8 @@ view model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let _ = Debug.log "Updating" model
+    in
     case msg of
         NoOp ->
             ( model, Cmd.none )
@@ -118,16 +147,44 @@ update msg model =
               newPlayers = newPlayer :: model.players
             in
               ( { model | players = newPlayers, inGame = True }, Cmd.none )
+        PhoenixMsg msg ->
+            let
+              ( phxSocket, phxCmd ) = Phoenix.Socket.update msg model.phxSocket
+            in
+              ( { model | phxSocket = phxSocket }
+              , Cmd.map PhoenixMsg phxCmd
+              )
+        JoinChannel ->
+            let
+                channel =
+                    Phoenix.Channel.init "room:lobby"
+                        |> Phoenix.Channel.withPayload userParams
+                        |> Phoenix.Channel.onJoin (always (ShowJoinedMessage "room:lobby"))
+                        |> Phoenix.Channel.onClose (always (ShowLeftMessage "room:lobby"))
+
+                ( phxSocket, phxCmd ) =
+                    Phoenix.Socket.join channel model.phxSocket
+            in
+                ( { model | phxSocket = phxSocket }
+                , Cmd.map PhoenixMsg phxCmd
+                )
+        ShowJoinedMessage channelName ->
+            ( { model | messages = ("Joined channel " ++ channelName) :: model.messages }
+            , Cmd.none
+            )
+
+        ShowLeftMessage channelName ->
+            ( { model | messages = ("Left channel " ++ channelName) :: model.messages }
+            , Cmd.none
+            )
 
 
 
 -- SUBSCRIPTIONS
 
-
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
-
+  Phoenix.Socket.listen model.phxSocket PhoenixMsg
 
 
 -- MAIN
