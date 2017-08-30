@@ -131,7 +131,7 @@ view model =
 
 userParams : String -> JE.Value
 userParams username =
-    JE.object [ ( "user_name", JE.string username ) ]
+    JE.object [ ( "name", JE.string username ) ]
 
 
 -- UPDATE

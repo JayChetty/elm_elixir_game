@@ -4,7 +4,7 @@ var _user$project$Main$userParams = function (username) {
 			ctor: '::',
 			_0: {
 				ctor: '_Tuple2',
-				_0: 'user_name',
+				_0: 'name',
 				_1: _elm_lang$core$Json_Encode$string(username)
 			},
 			_1: {ctor: '[]'}

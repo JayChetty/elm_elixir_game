@@ -1,12 +1,13 @@
 defmodule CollabWeb.RoomChannel do
   use Phoenix.Channel
   import Logger
+  alias Collab.GameState
+  # require Collab.GameState
 
   def join("room:lobby", message, socket) do
     Logger.warn("JOINING message #{inspect message}")
-    # Logger.warn("JOINING socket #{inspect socket}")
-    socket = assign(socket, :players, [%{name: "DUMMY PLAYER"}])
-    send(self, :after_join)
+    Logger.warn("JOINING socket #{inspect socket}")
+    send(self, {:after_join, message})
     {:ok, socket}
   end
 
@@ -14,13 +15,16 @@ defmodule CollabWeb.RoomChannel do
     {:error, %{reason: "unauthorized"}}
   end
 
-  def handle_info(:after_join, socket) do
-    broadcast! socket, "new_user", %{players: socket.assigns.players}
+  def handle_info({:after_join, player}, socket) do
+    GameState.add_player( player )
+    broadcast! socket, "new_user", %{players: GameState.players()}
     {:noreply, socket}
   end
 
   def handle_in("new_msg", %{}, socket) do
-    broadcast! socket, "new_msg", %{body: "lalala"}
+    count = Map.get(socket.assigns, :ping_count, 0)
+    socket = assign(socket, :ping_count, count + 1)
+    broadcast! socket, "new_msg", %{body: socket.assigns.ping_count}
     {:noreply, socket}
   end
 end

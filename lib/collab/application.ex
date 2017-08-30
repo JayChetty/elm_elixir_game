@@ -13,7 +13,7 @@ defmodule Collab.Application do
       # Start the endpoint when the application starts
       supervisor(CollabWeb.Endpoint, []),
       # Start your own worker by calling: Collab.Worker.start_link(arg1, arg2, arg3)
-      # worker(Collab.Worker, [arg1, arg2, arg3]),
+      worker(Collab.GameState, []),
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
