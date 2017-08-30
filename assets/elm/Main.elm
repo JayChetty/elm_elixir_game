@@ -22,7 +22,7 @@ import Json.Decode as JD exposing (field)
 type alias Position = {row: Int, col: Int}
 
 type alias Player =
-  { name: String}
+  { name: String }
 
 type alias Model =
   { players: List Player,
@@ -104,7 +104,7 @@ enterView : Model -> Html Msg
 enterView model =
   div []
       [ input [ placeholder "Player, enter name.", onInput Change ] []
-      , button [ onClick Submit ] [ text "Enter" ]
+      , button [ onClick JoinChannel ] [ text "Enter" ]
       ]
 
 
@@ -121,7 +121,6 @@ view model =
     [
       enterView model
     , playersView model
-    , button [ onClick JoinChannel ] [ text "Join Room" ]
     , button [ onClick Ping ] [ text "Ping" ]
     ]
   -- case model.inGame of
@@ -130,9 +129,9 @@ view model =
 
 
 
-userParams : JE.Value
-userParams =
-    JE.object [ ( "user_id", JE.string "123" ) ]
+userParams : String -> JE.Value
+userParams username =
+    JE.object [ ( "user_name", JE.string username ) ]
 
 
 -- UPDATE
@@ -160,12 +159,12 @@ update msg model =
               ( { model | phxSocket = phxSocket }
               , Cmd.map PhoenixMsg phxCmd
               )
-        JoinChannel ->
+        JoinChannel->
             let
                 _ = Debug.log "UPDATE" "Trying to join channel"
                 channel =
                     Phoenix.Channel.init "room:lobby"
-                        |> Phoenix.Channel.withPayload userParams
+                        |> Phoenix.Channel.withPayload(userParams model.currentPlayerName)
                         |> Phoenix.Channel.onJoin (always (ShowJoinedMessage "room:lobby"))
                         |> Phoenix.Channel.onClose (always (ShowLeftMessage "room:lobby"))
 

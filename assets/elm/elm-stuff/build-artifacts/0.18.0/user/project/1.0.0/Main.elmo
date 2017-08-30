@@ -1,13 +1,15 @@
-var _user$project$Main$userParams = _elm_lang$core$Json_Encode$object(
-	{
-		ctor: '::',
-		_0: {
-			ctor: '_Tuple2',
-			_0: 'user_id',
-			_1: _elm_lang$core$Json_Encode$string('123')
-		},
-		_1: {ctor: '[]'}
-	});
+var _user$project$Main$userParams = function (username) {
+	return _elm_lang$core$Json_Encode$object(
+		{
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'user_name',
+				_1: _elm_lang$core$Json_Encode$string(username)
+			},
+			_1: {ctor: '[]'}
+		});
+};
 var _user$project$Main$playersView = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -136,7 +138,7 @@ var _user$project$Main$update = F2(
 							_user$project$Main$ShowJoinedMessage('room:lobby')),
 						A2(
 							_fbonetti$elm_phoenix_socket$Phoenix_Channel$withPayload,
-							_user$project$Main$userParams,
+							_user$project$Main$userParams(model.currentPlayerName),
 							_fbonetti$elm_phoenix_socket$Phoenix_Channel$init('room:lobby'))));
 				var _p2 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.phxSocket);
 				var phxSocket = _p2._0;
@@ -287,7 +289,7 @@ var _user$project$Main$enterView = function (model) {
 					_elm_lang$html$Html$button,
 					{
 						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Submit),
+						_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$JoinChannel),
 						_1: {ctor: '[]'}
 					},
 					{
@@ -315,30 +317,15 @@ var _user$project$Main$view = function (model) {
 						_elm_lang$html$Html$button,
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$JoinChannel),
+							_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Ping),
 							_1: {ctor: '[]'}
 						},
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html$text('Join Room'),
+							_0: _elm_lang$html$Html$text('Ping'),
 							_1: {ctor: '[]'}
 						}),
-					_1: {
-						ctor: '::',
-						_0: A2(
-							_elm_lang$html$Html$button,
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Ping),
-								_1: {ctor: '[]'}
-							},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text('Ping'),
-								_1: {ctor: '[]'}
-							}),
-						_1: {ctor: '[]'}
-					}
+					_1: {ctor: '[]'}
 				}
 			}
 		});
