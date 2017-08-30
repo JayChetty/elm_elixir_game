@@ -14,6 +14,7 @@ import Debug
 
 import Json.Encode as JE
 import Json.Decode as JD exposing (field)
+import Json.Decode.Pipeline exposing (decode, required)
 
 
 
@@ -37,7 +38,7 @@ initPhxSocket : Phoenix.Socket.Socket Msg
 initPhxSocket =
     Phoenix.Socket.init "ws://localhost:4000/socket/websocket"
         |> Phoenix.Socket.withDebug
-        |> Phoenix.Socket.on "new_msg" "room:lobby" ReceiveMessage
+        |> Phoenix.Socket.on "new:player" "room:lobby" ReceiveMessage
 
 
 init : ( Model, Cmd Msg )
@@ -117,6 +118,9 @@ playersView model =
 
 view : Model -> Html Msg
 view model =
+  let
+    _ = Debug.log "VIEW" model
+  in
   div []
     [
       enterView model
@@ -133,6 +137,19 @@ userParams : String -> JE.Value
 userParams username =
     JE.object [ ( "name", JE.string username ) ]
 
+-- playersMessageDecoder : JD.Decoder (List Player)
+-- playersMessageDecoder
+--     JD
+
+playersDecoder : JD.Decoder (List Player)
+playersDecoder =
+    JD.list playerDecoder
+
+
+playerDecoder : JD.Decoder Player
+playerDecoder =
+    decode Player
+        |> Json.Decode.Pipeline.required "name" JD.string
 
 -- UPDATE
 
@@ -177,7 +194,9 @@ update msg model =
         ShowJoinedMessage channelName ->
             let _ = Debug.log "UPDATE" "JOINED CHANNEL!"
             in
-            ( { model | messages = ("Joined channel " ++ channelName) :: model.messages }
+            ( { model |
+                messages = ("Joined channel " ++ channelName) :: model.messages
+              }
             , Cmd.none
             )
 
@@ -195,9 +214,23 @@ update msg model =
             in
                 (  model , Cmd.map PhoenixMsg phxCmd )
         ReceiveMessage raw ->
-            let _ = Debug.log "GOT A NEW MESSAGE" "I DID"
+            let
+              _ = Debug.log "GOT A NEW MESSAGE" raw
             in
-            (model, Cmd.none)
+              case JD.decodeValue playersDecoder raw of
+                Ok players->
+                  let
+                    _ = Debug.log "GOT PLAYERS" players
+                  in
+                  ({ model | players = players}, Cmd.none)
+                Err error->
+                  let
+                    _ = Debug.log "ERROR MESSAGE" error
+                  in
+                  ( model, Cmd.none)
+
+
+
 
 
 

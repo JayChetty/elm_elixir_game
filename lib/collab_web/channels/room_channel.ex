@@ -2,11 +2,8 @@ defmodule CollabWeb.RoomChannel do
   use Phoenix.Channel
   import Logger
   alias Collab.GameState
-  # require Collab.GameState
 
   def join("room:lobby", message, socket) do
-    Logger.warn("JOINING message #{inspect message}")
-    Logger.warn("JOINING socket #{inspect socket}")
     send(self, {:after_join, message})
     {:ok, socket}
   end
@@ -17,7 +14,7 @@ defmodule CollabWeb.RoomChannel do
 
   def handle_info({:after_join, player}, socket) do
     GameState.add_player( player )
-    broadcast! socket, "new_user", %{players: GameState.players()}
+    broadcast! socket, "new:player", %{players: GameState.players()}
     {:noreply, socket}
   end
 
