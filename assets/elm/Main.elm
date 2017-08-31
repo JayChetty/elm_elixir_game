@@ -22,6 +22,10 @@ import Json.Decode.Pipeline exposing (decode, required)
 
 type alias Position = {row: Int, col: Int}
 
+
+type alias Data =
+  { players: List Player }
+
 type alias Player =
   { name: String }
 
@@ -140,6 +144,10 @@ userParams username =
 -- playersMessageDecoder : JD.Decoder (List Player)
 -- playersMessageDecoder
 --     JD
+dataDecoder : JD.Decoder Data
+dataDecoder =
+  decode Data
+    |> Json.Decode.Pipeline.required "players" playersDecoder
 
 playersDecoder : JD.Decoder (List Player)
 playersDecoder =
@@ -217,12 +225,12 @@ update msg model =
             let
               _ = Debug.log "GOT A NEW MESSAGE" raw
             in
-              case JD.decodeValue playersDecoder raw of
-                Ok players->
+              case JD.decodeValue dataDecoder raw of
+                Ok data->
                   let
-                    _ = Debug.log "GOT PLAYERS" players
+                    _ = Debug.log "GOT Data" data
                   in
-                  ({ model | players = players}, Cmd.none)
+                  ({ model | players = data.players}, Cmd.none)
                 Err error->
                   let
                     _ = Debug.log "ERROR MESSAGE" error

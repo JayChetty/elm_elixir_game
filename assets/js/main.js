@@ -10036,6 +10036,9 @@ var _user$project$Main$Position = F2(
 	function (a, b) {
 		return {row: a, col: b};
 	});
+var _user$project$Main$Data = function (a) {
+	return {players: a};
+};
 var _user$project$Main$Player = function (a) {
 	return {name: a};
 };
@@ -10045,6 +10048,11 @@ var _user$project$Main$playerDecoder = A3(
 	_elm_lang$core$Json_Decode$string,
 	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Main$Player));
 var _user$project$Main$playersDecoder = _elm_lang$core$Json_Decode$list(_user$project$Main$playerDecoder);
+var _user$project$Main$dataDecoder = A3(
+	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
+	'players',
+	_user$project$Main$playersDecoder,
+	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Main$Data));
 var _user$project$Main$Model = F6(
 	function (a, b, c, d, e, f) {
 		return {players: a, currentPlayerName: b, inGame: c, position: d, phxSocket: e, messages: f};
@@ -10196,15 +10204,15 @@ var _user$project$Main$update = F2(
 			default:
 				var _p11 = _p0._0;
 				var _p6 = A2(_elm_lang$core$Debug$log, 'GOT A NEW MESSAGE', _p11);
-				var _p7 = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Main$playersDecoder, _p11);
+				var _p7 = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Main$dataDecoder, _p11);
 				if (_p7.ctor === 'Ok') {
 					var _p9 = _p7._0;
-					var _p8 = A2(_elm_lang$core$Debug$log, 'GOT PLAYERS', _p9);
+					var _p8 = A2(_elm_lang$core$Debug$log, 'GOT Data', _p9);
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{players: _p9}),
+							{players: _p9.players}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				} else {
