@@ -11,6 +11,20 @@ defmodule CollabWeb.RoomChannel do
   def join("room:" <> _private_room_id, _params, _socket) do
     {:error, %{reason: "unauthorized"}}
   end
+  #
+  # def leave(socket, topic) do
+  #   Logger.debug "SOMEBODY LEAVING"
+  #   broadcast socket, "user:left", %{ "content" => "somebody is leaving" }
+  #   {:ok, socket}
+  # end
+
+  def terminate({_, _}, socket) do
+      Logger.debug "SOMEBODY LEAVING #{inspect socket}"
+      Logger.debug "SOMEBODY LEAVING #{inspect topic}"
+
+      # broadcast socket, "user:left", %{ "content" => "somebody is leaving" }
+      {:ok, socket}
+  end
 
   def handle_info({:after_join, player}, socket) do
     GameState.add_player( player )

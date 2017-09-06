@@ -10071,11 +10071,7 @@ var _user$project$Main$initPhxSocket = A4(
 var _user$project$Main$init = {
 	ctor: '_Tuple2',
 	_0: {
-		players: {
-			ctor: '::',
-			_0: {name: 'Someone Else'},
-			_1: {ctor: '[]'}
-		},
+		players: {ctor: '[]'},
 		currentPlayerName: '',
 		inGame: false,
 		position: A2(_user$project$Main$Position, 0, 0),

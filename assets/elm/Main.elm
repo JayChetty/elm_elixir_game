@@ -18,7 +18,7 @@ import Json.Decode.Pipeline exposing (decode, required)
 
 
 
--- MODEL
+  -- MODEL
 
 type alias Position = {row: Int, col: Int}
 
@@ -48,7 +48,7 @@ initPhxSocket =
 init : ( Model, Cmd Msg )
 init =
     ( {
-       players = [ {name = "Someone Else"}]
+       players = []
       ,currentPlayerName = ""
       ,inGame = False
       ,position = Position 0 0
