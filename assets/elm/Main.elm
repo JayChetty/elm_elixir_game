@@ -17,147 +17,126 @@ import Json.Decode as JD exposing (field)
 import Json.Decode.Pipeline exposing (decode, required)
 
 
+-- MODEL
 
-  -- MODEL
+-- Challenge is to connect to channel - need to have a token.
 
-type alias Position = {row: Int, col: Int}
+-- Have Saved User With Token?> Try to join Data Channel
+-- -- Successfully Connect. (WOOOHOOO)
+-- -- Cannot Connect.  Remove Token go to Do not have token.
+
+-- Do not have Token. Join Auth Channel
+-- -- Do you have login details for existing user?
+-- -- Yes. Use details to Get Token From Auth Channel
+-- -- Not. Sign up to add user details and get user token details.
 
 
 type alias Data =
-  { players: List Player }
+  { user: User }
 
-type alias Player =
-  { name: String }
+type alias User =
+  { email: String, token:String }
 
 type alias Model =
-  { players: List Player,
-    currentPlayerName: String,
-    inGame: Bool,
-    position: Position,
-    phxSocket : Phoenix.Socket.Socket Msg,
-    messages: List String
+  { phxSocket : Phoenix.Socket.Socket Msg,
+    user: Maybe User,
+    loginEmail: String,
+    loginPassword: String,
+    connected: Bool
   }
 
 initPhxSocket : Phoenix.Socket.Socket Msg
 initPhxSocket =
     Phoenix.Socket.init "ws://localhost:4000/socket/websocket"
         |> Phoenix.Socket.withDebug
-        |> Phoenix.Socket.on "new:player" "room:lobby" ReceiveMessage
+        -- |> Phoenix.Socket.on "new:player" "room:lobby" ReceiveMessage
 
 
 init : ( Model, Cmd Msg )
 init =
     ( {
-       players = []
-      ,currentPlayerName = ""
-      ,inGame = False
-      ,position = Position 0 0
+       user = Just (User "jay@email.com" "1234")
       ,phxSocket = initPhxSocket
-      ,messages = []
+      ,loginEmail = ""
+      ,loginPassword = ""
+      ,connected = False
       },
       Cmd.none
     )
+
+-- userEncoder : String -> JE.Value
+-- userEncoder username =
+--     JE.object [ ( "name", JE.string username ), () ]
+
+userEncoder : User -> JE.Value
+userEncoder user =
+    let
+        attributes =
+            [ ( "email", JE.string user.email )
+            , ( "token", JE.string user.token )
+            ]
+    in
+        JE.object attributes
+
+dataDecoder : JD.Decoder Data
+dataDecoder =
+  decode Data
+    |> Json.Decode.Pipeline.required "user" userDecoder
+
+
+
+userDecoder : JD.Decoder User
+userDecoder =
+    decode User
+        |> Json.Decode.Pipeline.required "email" JD.string
+        |> Json.Decode.Pipeline.required "token" JD.string
 
 
 
 -- MESSAGES
 
 
-type Msg=
-    Change String
-    | Submit
-    | Move Position
-    | PhoenixMsg (Phoenix.Socket.Msg Msg)
-    | JoinChannel
-    | ShowJoinedMessage String
-    | ShowLeftMessage String
-    | Ping
+type Msg =
+    PhoenixMsg (Phoenix.Socket.Msg Msg)
+    | JoinAuthChannel
+    | JoinDataChannel
+    | ShowJoinedDataMessage String
+    | ShowLeftDataMessage String
     | ReceiveMessage JE.Value
+    | ShowJoinDataErrorMessage String
     | NoOp
 
 
 
 -- VIEW
 
-boardView : Model -> Html Msg
-boardView model =
-    div [class "board"]
-      ( List.range 0 10
-        |> List.map( boardRowView(model) )
-      )
-
-
-boardRowView : Model -> Int -> Html Msg
-boardRowView model rowNum =
-  div [class "row"]
-    ( List.range 0 5
-      |> List.map( boardCell(model)(rowNum)  )
-    )
-
-boardCell :  Model -> Int -> Int -> Html Msg
-boardCell model rowNum colNum =
-  case model.position.row == rowNum && model.position.col == colNum of
-    True ->
-      div([class "cell"])([ text "J"])
-    False ->
-      div [class "cell", onClick (Move (Position rowNum colNum)) ] []
-
-
-
-
 enterView : Model -> Html Msg
 enterView model =
+  div [][
+          button [ onClick JoinDataChannel ] [ text "Enter" ]
+        ]
+      -- [ input [ placeholder "Username", onInput Change ] []
+      -- , input [ placeholder "Password", onInput Change ] []
+      -- , button [ onClick JoinChannel ] [ text "Enter" ]
+      -- ]
+
+channelView: Model -> Html Msg
+channelView model =
   div []
-      [ input [ placeholder "Player, enter name.", onInput Change ] []
-      , button [ onClick JoinChannel ] [ text "Enter" ]
-      ]
+      [ text "Success" ]
 
 
-playersView : Model -> Html Msg
-playersView model =
-  div []
-      [ul []
-        ( List.map (\player -> li [] [ text player.name ]) model.players )
-      ]
 
 view : Model -> Html Msg
 view model =
-  let
-    _ = Debug.log "VIEW" model
-  in
-  div []
-    [
+  case model.connected of
+    False ->
       enterView model
-    , playersView model
-    , button [ onClick Ping ] [ text "Ping" ]
-    ]
-  -- case model.inGame of
-  --     True -> playView model
-  --     False -> enterView model
+    True ->
+      channelView model
 
 
 
-userParams : String -> JE.Value
-userParams username =
-    JE.object [ ( "name", JE.string username ) ]
-
--- playersMessageDecoder : JD.Decoder (List Player)
--- playersMessageDecoder
---     JD
-dataDecoder : JD.Decoder Data
-dataDecoder =
-  decode Data
-    |> Json.Decode.Pipeline.required "players" playersDecoder
-
-playersDecoder : JD.Decoder (List Player)
-playersDecoder =
-    JD.list playerDecoder
-
-
-playerDecoder : JD.Decoder Player
-playerDecoder =
-    decode Player
-        |> Json.Decode.Pipeline.required "name" JD.string
 
 -- UPDATE
 
@@ -167,16 +146,6 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
-        Change text->
-            ( { model | currentPlayerName = text }, Cmd.none )
-        Move position ->
-            ( { model | position = position }, Cmd.none )
-        Submit->
-            let
-              newPlayer = { name = model.currentPlayerName }
-              newPlayers = newPlayer :: model.players
-            in
-              ( { model | players = newPlayers, inGame = True }, Cmd.none )
         PhoenixMsg msg ->
             let
               ( phxSocket, phxCmd ) = Phoenix.Socket.update msg model.phxSocket
@@ -184,61 +153,40 @@ update msg model =
               ( { model | phxSocket = phxSocket }
               , Cmd.map PhoenixMsg phxCmd
               )
-        JoinChannel->
-            let
-                _ = Debug.log "UPDATE" "Trying to join channel"
-                channel =
-                    Phoenix.Channel.init "room:lobby"
-                        |> Phoenix.Channel.withPayload(userParams model.currentPlayerName)
-                        |> Phoenix.Channel.onJoin (always (ShowJoinedMessage "room:lobby"))
-                        |> Phoenix.Channel.onClose (always (ShowLeftMessage "room:lobby"))
-
-                ( phxSocket, phxCmd ) =
-                    Phoenix.Socket.join channel model.phxSocket
-            in
-                ( { model | phxSocket = phxSocket }
-                , Cmd.map PhoenixMsg phxCmd
-                )
-        ShowJoinedMessage channelName ->
-            let _ = Debug.log "UPDATE" "JOINED CHANNEL!"
-            in
-            ( { model |
-                messages = ("Joined channel " ++ channelName) :: model.messages
-              }
-            , Cmd.none
-            )
-
-        ShowLeftMessage channelName ->
-            ( { model | messages = ("Left channel " ++ channelName) :: model.messages }
-            , Cmd.none
-            )
-        Ping ->
-            let
-                push_ =
-                    Phoenix.Push.init "new_msg" "room:lobby"
-
-                ( phxSocket, phxCmd ) =
-                    Phoenix.Socket.push push_ model.phxSocket
-            in
-                (  model , Cmd.map PhoenixMsg phxCmd )
-        ReceiveMessage raw ->
-            let
-              _ = Debug.log "GOT A NEW MESSAGE" raw
-            in
-              case JD.decodeValue dataDecoder raw of
-                Ok data->
-                  let
-                    _ = Debug.log "GOT Data" data
-                  in
-                  ({ model | players = data.players}, Cmd.none)
-                Err error->
-                  let
-                    _ = Debug.log "ERROR MESSAGE" error
-                  in
-                  ( model, Cmd.none)
+        JoinDataChannel->
+            case model.user of
+              Just user ->
+                let
+                    _ = Debug.log "UPDATE" "Trying to join data channel"
+                    channel =
+                        Phoenix.Channel.init "room:lobby"
+                            |> Phoenix.Channel.withPayload(userEncoder user)
+                            |> Phoenix.Channel.onJoin (always (ShowJoinedDataMessage "room:lobby"))
+                            |> Phoenix.Channel.onClose (always (ShowLeftDataMessage "room:lobby"))
+                            |> Phoenix.Channel.onJoinError (always (ShowJoinDataErrorMessage "room:lobby"))
 
 
-
+                    ( phxSocket, phxCmd ) =
+                        Phoenix.Socket.join channel model.phxSocket
+                in
+                    ( { model | phxSocket = phxSocket }
+                    , Cmd.map PhoenixMsg phxCmd
+                    )
+              Nothing ->
+                ( model, Cmd.none )
+        ShowJoinedDataMessage channelName ->
+          ( {model | connected = True}, Cmd.none )
+        ShowJoinDataErrorMessage channelName ->
+          let
+              _ = Debug.log "JOIN ERROR MESSAGE" channelName
+          in
+            ( model, Cmd.none)
+        ShowLeftDataMessage channelName ->
+          ( model, Cmd.none)
+        JoinAuthChannel ->
+          ( model, Cmd.none)
+        ReceiveMessage message ->
+          ( model, Cmd.none)
 
 
 

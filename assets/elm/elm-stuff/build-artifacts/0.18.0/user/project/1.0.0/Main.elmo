@@ -1,295 +1,86 @@
-var _user$project$Main$userParams = function (username) {
-	return _elm_lang$core$Json_Encode$object(
-		{
-			ctor: '::',
-			_0: {
-				ctor: '_Tuple2',
-				_0: 'name',
-				_1: _elm_lang$core$Json_Encode$string(username)
-			},
-			_1: {ctor: '[]'}
-		});
-};
-var _user$project$Main$playersView = function (model) {
+var _user$project$Main$channelView = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
 		{
 			ctor: '::',
-			_0: A2(
-				_elm_lang$html$Html$ul,
-				{ctor: '[]'},
-				A2(
-					_elm_lang$core$List$map,
-					function (player) {
-						return A2(
-							_elm_lang$html$Html$li,
-							{ctor: '[]'},
-							{
-								ctor: '::',
-								_0: _elm_lang$html$Html$text(player.name),
-								_1: {ctor: '[]'}
-							});
-					},
-					model.players)),
+			_0: _elm_lang$html$Html$text('Success'),
 			_1: {ctor: '[]'}
 		});
 };
-var _user$project$Main$Position = F2(
-	function (a, b) {
-		return {row: a, col: b};
-	});
+var _user$project$Main$userEncoder = function (user) {
+	var attributes = {
+		ctor: '::',
+		_0: {
+			ctor: '_Tuple2',
+			_0: 'email',
+			_1: _elm_lang$core$Json_Encode$string(user.email)
+		},
+		_1: {
+			ctor: '::',
+			_0: {
+				ctor: '_Tuple2',
+				_0: 'token',
+				_1: _elm_lang$core$Json_Encode$string(user.token)
+			},
+			_1: {ctor: '[]'}
+		}
+	};
+	return _elm_lang$core$Json_Encode$object(attributes);
+};
+var _user$project$Main$initPhxSocket = _fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
+	_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:4000/socket/websocket'));
 var _user$project$Main$Data = function (a) {
-	return {players: a};
+	return {user: a};
 };
-var _user$project$Main$Player = function (a) {
-	return {name: a};
-};
-var _user$project$Main$playerDecoder = A3(
-	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
-	'name',
-	_elm_lang$core$Json_Decode$string,
-	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Main$Player));
-var _user$project$Main$playersDecoder = _elm_lang$core$Json_Decode$list(_user$project$Main$playerDecoder);
-var _user$project$Main$dataDecoder = A3(
-	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
-	'players',
-	_user$project$Main$playersDecoder,
-	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Main$Data));
-var _user$project$Main$Model = F6(
-	function (a, b, c, d, e, f) {
-		return {players: a, currentPlayerName: b, inGame: c, position: d, phxSocket: e, messages: f};
+var _user$project$Main$User = F2(
+	function (a, b) {
+		return {email: a, token: b};
 	});
-var _user$project$Main$NoOp = {ctor: 'NoOp'};
-var _user$project$Main$ReceiveMessage = function (a) {
-	return {ctor: 'ReceiveMessage', _0: a};
-};
-var _user$project$Main$initPhxSocket = A4(
-	_fbonetti$elm_phoenix_socket$Phoenix_Socket$on,
-	'new:player',
-	'room:lobby',
-	_user$project$Main$ReceiveMessage,
-	_fbonetti$elm_phoenix_socket$Phoenix_Socket$withDebug(
-		_fbonetti$elm_phoenix_socket$Phoenix_Socket$init('ws://localhost:4000/socket/websocket')));
 var _user$project$Main$init = {
 	ctor: '_Tuple2',
 	_0: {
-		players: {ctor: '[]'},
-		currentPlayerName: '',
-		inGame: false,
-		position: A2(_user$project$Main$Position, 0, 0),
+		user: _elm_lang$core$Maybe$Just(
+			A2(_user$project$Main$User, 'jay@email.com', '1234')),
 		phxSocket: _user$project$Main$initPhxSocket,
-		messages: {ctor: '[]'}
+		loginEmail: '',
+		loginPassword: '',
+		connected: false
 	},
 	_1: _elm_lang$core$Platform_Cmd$none
 };
-var _user$project$Main$Ping = {ctor: 'Ping'};
-var _user$project$Main$ShowLeftMessage = function (a) {
-	return {ctor: 'ShowLeftMessage', _0: a};
-};
-var _user$project$Main$ShowJoinedMessage = function (a) {
-	return {ctor: 'ShowJoinedMessage', _0: a};
-};
-var _user$project$Main$JoinChannel = {ctor: 'JoinChannel'};
-var _user$project$Main$PhoenixMsg = function (a) {
-	return {ctor: 'PhoenixMsg', _0: a};
-};
-var _user$project$Main$update = F2(
-	function (msg, model) {
-		var _p0 = msg;
-		switch (_p0.ctor) {
-			case 'NoOp':
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			case 'Change':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{currentPlayerName: _p0._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'Move':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{position: _p0._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'Submit':
-				var newPlayer = {name: model.currentPlayerName};
-				var newPlayers = {ctor: '::', _0: newPlayer, _1: model.players};
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{players: newPlayers, inGame: true}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'PhoenixMsg':
-				var _p1 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p0._0, model.phxSocket);
-				var phxSocket = _p1._0;
-				var phxCmd = _p1._1;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{phxSocket: phxSocket}),
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
-				};
-			case 'JoinChannel':
-				var channel = A2(
-					_fbonetti$elm_phoenix_socket$Phoenix_Channel$onClose,
-					_elm_lang$core$Basics$always(
-						_user$project$Main$ShowLeftMessage('room:lobby')),
-					A2(
-						_fbonetti$elm_phoenix_socket$Phoenix_Channel$onJoin,
-						_elm_lang$core$Basics$always(
-							_user$project$Main$ShowJoinedMessage('room:lobby')),
-						A2(
-							_fbonetti$elm_phoenix_socket$Phoenix_Channel$withPayload,
-							_user$project$Main$userParams(model.currentPlayerName),
-							_fbonetti$elm_phoenix_socket$Phoenix_Channel$init('room:lobby'))));
-				var _p2 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.phxSocket);
-				var phxSocket = _p2._0;
-				var phxCmd = _p2._1;
-				var _p3 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'Trying to join channel');
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{phxSocket: phxSocket}),
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
-				};
-			case 'ShowJoinedMessage':
-				var _p4 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'JOINED CHANNEL!');
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							messages: {
-								ctor: '::',
-								_0: A2(_elm_lang$core$Basics_ops['++'], 'Joined channel ', _p0._0),
-								_1: model.messages
-							}
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'ShowLeftMessage':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							messages: {
-								ctor: '::',
-								_0: A2(_elm_lang$core$Basics_ops['++'], 'Left channel ', _p0._0),
-								_1: model.messages
-							}
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'Ping':
-				var push_ = A2(_fbonetti$elm_phoenix_socket$Phoenix_Push$init, 'new_msg', 'room:lobby');
-				var _p5 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$push, push_, model.phxSocket);
-				var phxSocket = _p5._0;
-				var phxCmd = _p5._1;
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
-				};
-			default:
-				var _p11 = _p0._0;
-				var _p6 = A2(_elm_lang$core$Debug$log, 'GOT A NEW MESSAGE', _p11);
-				var _p7 = A2(_elm_lang$core$Json_Decode$decodeValue, _user$project$Main$dataDecoder, _p11);
-				if (_p7.ctor === 'Ok') {
-					var _p9 = _p7._0;
-					var _p8 = A2(_elm_lang$core$Debug$log, 'GOT Data', _p9);
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{players: _p9.players}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					var _p10 = A2(_elm_lang$core$Debug$log, 'ERROR MESSAGE', _p7._0);
-					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-				}
-		}
+var _user$project$Main$userDecoder = A3(
+	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
+	'token',
+	_elm_lang$core$Json_Decode$string,
+	A3(
+		_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
+		'email',
+		_elm_lang$core$Json_Decode$string,
+		_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Main$User)));
+var _user$project$Main$dataDecoder = A3(
+	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
+	'user',
+	_user$project$Main$userDecoder,
+	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Main$Data));
+var _user$project$Main$Model = F5(
+	function (a, b, c, d, e) {
+		return {phxSocket: a, user: b, loginEmail: c, loginPassword: d, connected: e};
 	});
-var _user$project$Main$subscriptions = function (model) {
-	return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$listen, model.phxSocket, _user$project$Main$PhoenixMsg);
+var _user$project$Main$NoOp = {ctor: 'NoOp'};
+var _user$project$Main$ShowJoinDataErrorMessage = function (a) {
+	return {ctor: 'ShowJoinDataErrorMessage', _0: a};
 };
-var _user$project$Main$Move = function (a) {
-	return {ctor: 'Move', _0: a};
+var _user$project$Main$ReceiveMessage = function (a) {
+	return {ctor: 'ReceiveMessage', _0: a};
 };
-var _user$project$Main$boardCell = F3(
-	function (model, rowNum, colNum) {
-		var _p12 = _elm_lang$core$Native_Utils.eq(model.position.row, rowNum) && _elm_lang$core$Native_Utils.eq(model.position.col, colNum);
-		if (_p12 === true) {
-			return A2(
-				_elm_lang$html$Html$div,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('cell'),
-					_1: {ctor: '[]'}
-				},
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html$text('J'),
-					_1: {ctor: '[]'}
-				});
-		} else {
-			return A2(
-				_elm_lang$html$Html$div,
-				{
-					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$class('cell'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(
-							_user$project$Main$Move(
-								A2(_user$project$Main$Position, rowNum, colNum))),
-						_1: {ctor: '[]'}
-					}
-				},
-				{ctor: '[]'});
-		}
-	});
-var _user$project$Main$boardRowView = F2(
-	function (model, rowNum) {
-		return A2(
-			_elm_lang$html$Html$div,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$class('row'),
-				_1: {ctor: '[]'}
-			},
-			A2(
-				_elm_lang$core$List$map,
-				A2(_user$project$Main$boardCell, model, rowNum),
-				A2(_elm_lang$core$List$range, 0, 5)));
-	});
-var _user$project$Main$boardView = function (model) {
-	return A2(
-		_elm_lang$html$Html$div,
-		{
-			ctor: '::',
-			_0: _elm_lang$html$Html_Attributes$class('board'),
-			_1: {ctor: '[]'}
-		},
-		A2(
-			_elm_lang$core$List$map,
-			_user$project$Main$boardRowView(model),
-			A2(_elm_lang$core$List$range, 0, 10)));
+var _user$project$Main$ShowLeftDataMessage = function (a) {
+	return {ctor: 'ShowLeftDataMessage', _0: a};
 };
-var _user$project$Main$Submit = {ctor: 'Submit'};
-var _user$project$Main$Change = function (a) {
-	return {ctor: 'Change', _0: a};
+var _user$project$Main$ShowJoinedDataMessage = function (a) {
+	return {ctor: 'ShowJoinedDataMessage', _0: a};
 };
+var _user$project$Main$JoinDataChannel = {ctor: 'JoinDataChannel'};
 var _user$project$Main$enterView = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -297,64 +88,103 @@ var _user$project$Main$enterView = function (model) {
 		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$input,
+				_elm_lang$html$Html$button,
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Attributes$placeholder('Player, enter name.'),
-					_1: {
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onInput(_user$project$Main$Change),
-						_1: {ctor: '[]'}
-					}
+					_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$JoinDataChannel),
+					_1: {ctor: '[]'}
 				},
-				{ctor: '[]'}),
-			_1: {
-				ctor: '::',
-				_0: A2(
-					_elm_lang$html$Html$button,
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$JoinChannel),
-						_1: {ctor: '[]'}
-					},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text('Enter'),
-						_1: {ctor: '[]'}
-					}),
-				_1: {ctor: '[]'}
-			}
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text('Enter'),
+					_1: {ctor: '[]'}
+				}),
+			_1: {ctor: '[]'}
 		});
 };
 var _user$project$Main$view = function (model) {
-	var _p13 = A2(_elm_lang$core$Debug$log, 'VIEW', model);
-	return A2(
-		_elm_lang$html$Html$div,
-		{ctor: '[]'},
-		{
-			ctor: '::',
-			_0: _user$project$Main$enterView(model),
-			_1: {
-				ctor: '::',
-				_0: _user$project$Main$playersView(model),
-				_1: {
-					ctor: '::',
-					_0: A2(
-						_elm_lang$html$Html$button,
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$Ping),
-							_1: {ctor: '[]'}
-						},
-						{
-							ctor: '::',
-							_0: _elm_lang$html$Html$text('Ping'),
-							_1: {ctor: '[]'}
-						}),
-					_1: {ctor: '[]'}
+	var _p0 = model.connected;
+	if (_p0 === false) {
+		return _user$project$Main$enterView(model);
+	} else {
+		return _user$project$Main$channelView(model);
+	}
+};
+var _user$project$Main$JoinAuthChannel = {ctor: 'JoinAuthChannel'};
+var _user$project$Main$PhoenixMsg = function (a) {
+	return {ctor: 'PhoenixMsg', _0: a};
+};
+var _user$project$Main$update = F2(
+	function (msg, model) {
+		var _p1 = msg;
+		switch (_p1.ctor) {
+			case 'NoOp':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'PhoenixMsg':
+				var _p2 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p1._0, model.phxSocket);
+				var phxSocket = _p2._0;
+				var phxCmd = _p2._1;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{phxSocket: phxSocket}),
+					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
+				};
+			case 'JoinDataChannel':
+				var _p3 = model.user;
+				if (_p3.ctor === 'Just') {
+					var channel = A2(
+						_fbonetti$elm_phoenix_socket$Phoenix_Channel$onJoinError,
+						_elm_lang$core$Basics$always(
+							_user$project$Main$ShowJoinDataErrorMessage('room:lobby')),
+						A2(
+							_fbonetti$elm_phoenix_socket$Phoenix_Channel$onClose,
+							_elm_lang$core$Basics$always(
+								_user$project$Main$ShowLeftDataMessage('room:lobby')),
+							A2(
+								_fbonetti$elm_phoenix_socket$Phoenix_Channel$onJoin,
+								_elm_lang$core$Basics$always(
+									_user$project$Main$ShowJoinedDataMessage('room:lobby')),
+								A2(
+									_fbonetti$elm_phoenix_socket$Phoenix_Channel$withPayload,
+									_user$project$Main$userEncoder(_p3._0),
+									_fbonetti$elm_phoenix_socket$Phoenix_Channel$init('room:lobby')))));
+					var _p4 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.phxSocket);
+					var phxSocket = _p4._0;
+					var phxCmd = _p4._1;
+					var _p5 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'Trying to join data channel');
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{phxSocket: phxSocket}),
+						_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
+					};
+				} else {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
-			}
-		});
+			case 'ShowJoinedDataMessage':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{connected: true}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'ShowJoinDataErrorMessage':
+				var _p6 = A2(_elm_lang$core$Debug$log, 'JOIN ERROR MESSAGE', _p1._0);
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'ShowLeftDataMessage':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'JoinAuthChannel':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			default:
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+		}
+	});
+var _user$project$Main$subscriptions = function (model) {
+	return A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$listen, model.phxSocket, _user$project$Main$PhoenixMsg);
 };
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{init: _user$project$Main$init, view: _user$project$Main$view, update: _user$project$Main$update, subscriptions: _user$project$Main$subscriptions})();

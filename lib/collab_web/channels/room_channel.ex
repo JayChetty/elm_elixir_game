@@ -1,11 +1,12 @@
 defmodule CollabWeb.RoomChannel do
   use Phoenix.Channel
-  import Logger
+  require Logger
   alias Collab.GameState
 
   def join("room:lobby", message, socket) do
-    send(self, {:after_join, message})
-    {:ok, socket}
+    Logger.debug "TRYINGN TO JOIN #{inspect socket}"
+    # {:ok, socket}
+    {:error, %{reason: "unauthorized"}}
   end
 
   def join("room:" <> _private_room_id, _params, _socket) do
@@ -20,7 +21,7 @@ defmodule CollabWeb.RoomChannel do
 
   def terminate({_, _}, socket) do
       Logger.debug "SOMEBODY LEAVING #{inspect socket}"
-      Logger.debug "SOMEBODY LEAVING #{inspect topic}"
+      # Logger.debug "SOMEBODY LEAVING #{inspect topic}"
 
       # broadcast socket, "user:left", %{ "content" => "somebody is leaving" }
       {:ok, socket}
