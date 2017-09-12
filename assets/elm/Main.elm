@@ -21,27 +21,7 @@ import Json.Decode.Pipeline exposing (decode, required)
 
 -- Challenge is to connect to channel - need to have a token.
 
--- Chain of events. Aim connect to Data Channel
 
-
-
--- Retrive a saved User from localStorage.
--- -- (A)Got User
--- -- -- Connect To Data Channel with user details
--- -- -- -- Sucessfully Connected(WIN)
--- -- -- -- Not successfully connected (Delete expired deets)
--- -- (B)No Saved user
-
--- Login
-
--- Have Saved User With Token?> Try to join Data Channel
--- -- Successfully Connect. (WOOOHOOO)
--- -- Cannot Connect.  Remove Token go to Do not have token.
-
--- Do not have Token. Join Auth Channel
--- -- Do you have login details for existing user?
--- -- Yes. Use details to Get Token From Auth Channel
--- -- Not. Sign up to add user details and get user token details.
 
 
 type alias Data =
@@ -54,8 +34,7 @@ type alias Model =
   { phxSocket : Phoenix.Socket.Socket Msg,
     user: Maybe User,
     loginEmail: String,
-    loginPassword: String,
-    connected: Bool
+    loginPassword: String
   }
 
 initPhxSocket : Phoenix.Socket.Socket Msg
@@ -71,11 +50,10 @@ init =
       socket = initPhxSocket
     in
     ( {
-       user = Just (User "jay@email.com" "1234")
+       user = Nothing
       ,phxSocket = socket
       ,loginEmail = ""
       ,loginPassword = ""
-      ,connected = False
       },
       joinAuthCommand(socket)
     )
@@ -121,6 +99,11 @@ type Msg =
     | ShowLeftDataMessage String
     | ReceiveMessage JE.Value
     | ShowJoinDataErrorMessage String
+    -- | GetTokenLocal
+    | RequestTokenSocket
+    -- | SetToken String
+    | UpdateEmail String
+    | UpdatePassword String
     | NoOp
 
 
@@ -130,10 +113,10 @@ type Msg =
 enterView : Model -> Html Msg
 enterView model =
   div [][
-          button [ onClick JoinDataChannel ] [ text "Enter" ]
+          input [ placeholder "Username", onInput UpdateEmail ] []
+        , input [ placeholder "Password", onInput UpdatePassword ] []
+        , button [ onClick GetTokenSocket ] [ text "Enter" ]
         ]
-      -- [ input [ placeholder "Username", onInput Change ] []
-      -- , input [ placeholder "Password", onInput Change ] []
       -- , button [ onClick JoinChannel ] [ text "Enter" ]
       -- ]
 
@@ -146,14 +129,15 @@ channelView model =
 
 view : Model -> Html Msg
 view model =
-  case model.connected of
-    False ->
-      enterView model
-    True ->
+  case model.user of
+    Just user ->
       channelView model
+    Nothing ->
+      enterView model
 
 
--- CMDS
+
+
 joinAuthCommand : Phoenix.Socket.Socket Msg -> Cmd Msg
 joinAuthCommand socket =
         let
@@ -209,7 +193,7 @@ update msg model =
               Nothing ->
                 ( model, Cmd.none )
         ShowJoinedDataMessage channelName ->
-          ( {model | connected = True}, Cmd.none )
+          ( model, Cmd.none )
         ShowJoinDataErrorMessage channelName ->
           let
               _ = Debug.log "JOIN ERROR MESSAGE" channelName
@@ -221,6 +205,12 @@ update msg model =
           ( model, Cmd.none)
         ReceiveMessage message ->
           ( model, Cmd.none)
+        UpdateEmail email ->
+          ( { model | loginEmail = email }, Cmd.none)
+        UpdatePassword password ->
+          ( { model | loginPassword = password }, Cmd.none)
+        RequestTokenSocket ->
+
 
 
 

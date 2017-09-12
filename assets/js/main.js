@@ -10048,11 +10048,17 @@ var _user$project$Main$dataDecoder = A3(
 	'user',
 	_user$project$Main$userDecoder,
 	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$decode(_user$project$Main$Data));
-var _user$project$Main$Model = F5(
-	function (a, b, c, d, e) {
-		return {phxSocket: a, user: b, loginEmail: c, loginPassword: d, connected: e};
+var _user$project$Main$Model = F4(
+	function (a, b, c, d) {
+		return {phxSocket: a, user: b, loginEmail: c, loginPassword: d};
 	});
 var _user$project$Main$NoOp = {ctor: 'NoOp'};
+var _user$project$Main$UpdatePassword = function (a) {
+	return {ctor: 'UpdatePassword', _0: a};
+};
+var _user$project$Main$UpdateEmail = function (a) {
+	return {ctor: 'UpdateEmail', _0: a};
+};
 var _user$project$Main$ShowJoinDataErrorMessage = function (a) {
 	return {ctor: 'ShowJoinDataErrorMessage', _0: a};
 };
@@ -10073,26 +10079,56 @@ var _user$project$Main$enterView = function (model) {
 		{
 			ctor: '::',
 			_0: A2(
-				_elm_lang$html$Html$button,
+				_elm_lang$html$Html$input,
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$JoinDataChannel),
-					_1: {ctor: '[]'}
+					_0: _elm_lang$html$Html_Attributes$placeholder('Username'),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$html$Html_Events$onInput(_user$project$Main$UpdateEmail),
+						_1: {ctor: '[]'}
+					}
 				},
-				{
+				{ctor: '[]'}),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$input,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$placeholder('Password'),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$html$Html_Events$onInput(_user$project$Main$UpdatePassword),
+							_1: {ctor: '[]'}
+						}
+					},
+					{ctor: '[]'}),
+				_1: {
 					ctor: '::',
-					_0: _elm_lang$html$Html$text('Enter'),
+					_0: A2(
+						_elm_lang$html$Html$button,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$JoinDataChannel),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text('Enter'),
+							_1: {ctor: '[]'}
+						}),
 					_1: {ctor: '[]'}
-				}),
-			_1: {ctor: '[]'}
+				}
+			}
 		});
 };
 var _user$project$Main$view = function (model) {
-	var _p0 = model.connected;
-	if (_p0 === false) {
-		return _user$project$Main$enterView(model);
-	} else {
+	var _p0 = model.user;
+	if (_p0.ctor === 'Just') {
 		return _user$project$Main$channelView(model);
+	} else {
+		return _user$project$Main$enterView(model);
 	}
 };
 var _user$project$Main$JoinAuthChannel = {ctor: 'JoinAuthChannel'};
@@ -10123,14 +10159,7 @@ var _user$project$Main$init = function () {
 	var socket = _user$project$Main$initPhxSocket;
 	return {
 		ctor: '_Tuple2',
-		_0: {
-			user: _elm_lang$core$Maybe$Just(
-				A2(_user$project$Main$User, 'jay@email.com', '1234')),
-			phxSocket: socket,
-			loginEmail: '',
-			loginPassword: '',
-			connected: false
-		},
+		_0: {user: _elm_lang$core$Maybe$Nothing, phxSocket: socket, loginEmail: '', loginPassword: ''},
 		_1: _user$project$Main$joinAuthCommand(socket)
 	};
 }();
@@ -10185,13 +10214,7 @@ var _user$project$Main$update = F2(
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				}
 			case 'ShowJoinedDataMessage':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{connected: true}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'ShowJoinDataErrorMessage':
 				var _p8 = A2(_elm_lang$core$Debug$log, 'JOIN ERROR MESSAGE', _p3._0);
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -10199,8 +10222,24 @@ var _user$project$Main$update = F2(
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'JoinAuthChannel':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
-			default:
+			case 'ReceiveMessage':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'UpdateEmail':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{loginEmail: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{loginPassword: _p3._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 		}
 	});
 var _user$project$Main$subscriptions = function (model) {

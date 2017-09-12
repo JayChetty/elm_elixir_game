@@ -4,6 +4,8 @@ defmodule CollabWeb.UserSocket do
 
   ## Channels
   channel "room:*", CollabWeb.RoomChannel
+  channel "auth:*", CollabWeb.AuthChannel
+
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket
