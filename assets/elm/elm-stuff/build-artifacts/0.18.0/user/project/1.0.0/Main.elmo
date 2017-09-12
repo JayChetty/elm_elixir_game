@@ -37,18 +37,6 @@ var _user$project$Main$User = F2(
 	function (a, b) {
 		return {email: a, token: b};
 	});
-var _user$project$Main$init = {
-	ctor: '_Tuple2',
-	_0: {
-		user: _elm_lang$core$Maybe$Just(
-			A2(_user$project$Main$User, 'jay@email.com', '1234')),
-		phxSocket: _user$project$Main$initPhxSocket,
-		loginEmail: '',
-		loginPassword: '',
-		connected: false
-	},
-	_1: _elm_lang$core$Platform_Cmd$none
-};
 var _user$project$Main$userDecoder = A3(
 	_NoRedInk$elm_decode_pipeline$Json_Decode_Pipeline$required,
 	'token',
@@ -114,16 +102,51 @@ var _user$project$Main$JoinAuthChannel = {ctor: 'JoinAuthChannel'};
 var _user$project$Main$PhoenixMsg = function (a) {
 	return {ctor: 'PhoenixMsg', _0: a};
 };
+var _user$project$Main$joinAuthCommand = function (socket) {
+	var channel = A2(
+		_fbonetti$elm_phoenix_socket$Phoenix_Channel$onJoinError,
+		_elm_lang$core$Basics$always(
+			_user$project$Main$ShowJoinDataErrorMessage('auth:lobby')),
+		A2(
+			_fbonetti$elm_phoenix_socket$Phoenix_Channel$onClose,
+			_elm_lang$core$Basics$always(
+				_user$project$Main$ShowLeftDataMessage('auth:lobby')),
+			A2(
+				_fbonetti$elm_phoenix_socket$Phoenix_Channel$onJoin,
+				_elm_lang$core$Basics$always(
+					_user$project$Main$ShowJoinedDataMessage('auth:lobby')),
+				_fbonetti$elm_phoenix_socket$Phoenix_Channel$init('auth:lobby'))));
+	var _p1 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, socket);
+	var phxSocket = _p1._0;
+	var phxCmd = _p1._1;
+	var _p2 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'Trying to join auth');
+	return A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd);
+};
+var _user$project$Main$init = function () {
+	var socket = _user$project$Main$initPhxSocket;
+	return {
+		ctor: '_Tuple2',
+		_0: {
+			user: _elm_lang$core$Maybe$Just(
+				A2(_user$project$Main$User, 'jay@email.com', '1234')),
+			phxSocket: socket,
+			loginEmail: '',
+			loginPassword: '',
+			connected: false
+		},
+		_1: _user$project$Main$joinAuthCommand(socket)
+	};
+}();
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p1 = msg;
-		switch (_p1.ctor) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
 			case 'NoOp':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'PhoenixMsg':
-				var _p2 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p1._0, model.phxSocket);
-				var phxSocket = _p2._0;
-				var phxCmd = _p2._1;
+				var _p4 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$update, _p3._0, model.phxSocket);
+				var phxSocket = _p4._0;
+				var phxCmd = _p4._1;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -132,8 +155,8 @@ var _user$project$Main$update = F2(
 					_1: A2(_elm_lang$core$Platform_Cmd$map, _user$project$Main$PhoenixMsg, phxCmd)
 				};
 			case 'JoinDataChannel':
-				var _p3 = model.user;
-				if (_p3.ctor === 'Just') {
+				var _p5 = model.user;
+				if (_p5.ctor === 'Just') {
 					var channel = A2(
 						_fbonetti$elm_phoenix_socket$Phoenix_Channel$onJoinError,
 						_elm_lang$core$Basics$always(
@@ -148,12 +171,12 @@ var _user$project$Main$update = F2(
 									_user$project$Main$ShowJoinedDataMessage('room:lobby')),
 								A2(
 									_fbonetti$elm_phoenix_socket$Phoenix_Channel$withPayload,
-									_user$project$Main$userEncoder(_p3._0),
+									_user$project$Main$userEncoder(_p5._0),
 									_fbonetti$elm_phoenix_socket$Phoenix_Channel$init('room:lobby')))));
-					var _p4 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.phxSocket);
-					var phxSocket = _p4._0;
-					var phxCmd = _p4._1;
-					var _p5 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'Trying to join data channel');
+					var _p6 = A2(_fbonetti$elm_phoenix_socket$Phoenix_Socket$join, channel, model.phxSocket);
+					var phxSocket = _p6._0;
+					var phxCmd = _p6._1;
+					var _p7 = A2(_elm_lang$core$Debug$log, 'UPDATE', 'Trying to join data channel');
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -173,7 +196,7 @@ var _user$project$Main$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ShowJoinDataErrorMessage':
-				var _p6 = A2(_elm_lang$core$Debug$log, 'JOIN ERROR MESSAGE', _p1._0);
+				var _p8 = A2(_elm_lang$core$Debug$log, 'JOIN ERROR MESSAGE', _p3._0);
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 			case 'ShowLeftDataMessage':
 				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};

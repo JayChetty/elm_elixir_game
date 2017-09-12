@@ -21,6 +21,19 @@ import Json.Decode.Pipeline exposing (decode, required)
 
 -- Challenge is to connect to channel - need to have a token.
 
+-- Chain of events. Aim connect to Data Channel
+
+
+
+-- Retrive a saved User from localStorage.
+-- -- (A)Got User
+-- -- -- Connect To Data Channel with user details
+-- -- -- -- Sucessfully Connected(WIN)
+-- -- -- -- Not successfully connected (Delete expired deets)
+-- -- (B)No Saved user
+
+-- Login
+
 -- Have Saved User With Token?> Try to join Data Channel
 -- -- Successfully Connect. (WOOOHOOO)
 -- -- Cannot Connect.  Remove Token go to Do not have token.
@@ -54,16 +67,20 @@ initPhxSocket =
 
 init : ( Model, Cmd Msg )
 init =
+    let
+      socket = initPhxSocket
+    in
     ( {
        user = Just (User "jay@email.com" "1234")
-      ,phxSocket = initPhxSocket
+      ,phxSocket = socket
       ,loginEmail = ""
       ,loginPassword = ""
       ,connected = False
       },
-      Cmd.none
+      joinAuthCommand(socket)
     )
 
+--
 -- userEncoder : String -> JE.Value
 -- userEncoder username =
 --     JE.object [ ( "name", JE.string username ), () ]
@@ -135,6 +152,23 @@ view model =
     True ->
       channelView model
 
+
+-- CMDS
+joinAuthCommand : Phoenix.Socket.Socket Msg -> Cmd Msg
+joinAuthCommand socket =
+        let
+            _ = Debug.log "UPDATE" "Trying to join auth"
+            channel =
+                Phoenix.Channel.init "auth:lobby"
+                    |> Phoenix.Channel.onJoin (always (ShowJoinedDataMessage "auth:lobby"))
+                    |> Phoenix.Channel.onClose (always (ShowLeftDataMessage "auth:lobby"))
+                    |> Phoenix.Channel.onJoinError (always (ShowJoinDataErrorMessage "auth:lobby"))
+
+
+            ( phxSocket, phxCmd ) =
+                Phoenix.Socket.join channel socket
+        in
+          Cmd.map PhoenixMsg phxCmd
 
 
 
